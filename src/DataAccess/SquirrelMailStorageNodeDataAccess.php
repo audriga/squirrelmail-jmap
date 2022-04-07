@@ -3,9 +3,13 @@
 namespace OpenXPort\DataAccess;
 
 use OpenXPort\DataAccess\AbstractDataAccess;
+use OpenXPort\Util\AdapterUtil;
 
+// NOTE Sharing not implemented. We currently ignore accountId from call.
 class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
 {
+    protected $accountId;
+
     private function collectAncestorPaths($accountId, $ancestorIds, $hasBlobId = null)
     {
         $relativePaths = array();
@@ -79,15 +83,26 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
         return $relativePaths;
     }
 
+    /* Initialize Data Accessor with userId*/
+    protected function init()
+    {
+        require_once(__DIR__ . '/../../../../functions/global.php');
+
+        sqGetGlobalVar('username', $this->accountId);
+    }
+
+
     public function getAll($accountId = null)
     {
-        // TODO
+        throw new BadMethodCallException("StorageNode/get requires specific IDs.");
     }
 
     /** Get Storage Nodes for certain paths
         * id is relative path **/
     public function get($ids, $accountId = null, $includeParentsLimit = 0)
     {
+        $this->init();
+
         $nodes = [];
 
         foreach ($ids as $id) {
@@ -96,10 +111,20 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
             } elseif ($id == "trash") {
                 $id = "/recycle_bin/";
             }
-            array_push($nodes, new \Squirrel\StorageNode($accountId, $id));
+            array_push($nodes, new \Squirrel\StorageNode($this->accountId, $id));
         }
 
         return $nodes;
+    }
+
+    public function create($nodesToCreate, $accountId = null)
+    {
+        throw new BadMethodCallException("Create via StorageNode/set not implemented");
+    }
+
+    public function destroy($ids, $accountId = null)
+    {
+        throw new BadMethodCallException("Destroy via StorageNode/set not implemented");
     }
 
     /** Get a list of Storage Nodes
@@ -107,10 +132,12 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
     // TODO support multiple filter conditions like in the standard
     public function query($accountId, $filter = null)
     {
+        $this->init();
+
         $resultArray = array();
 
         if ($filter === null) {
-            $tmpArray = $this->collectAncestorPaths($accountId, ["root"]);
+            $tmpArray = $this->collectAncestorPaths($this->accountId, ["root"]);
             array_push($tmpArray, "root");
 
             return $tmpArray;
@@ -118,13 +145,13 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
         if (!is_null($filter->getAncestorIds())) {
             array_push(
                 $resultArray,
-                $this->collectAncestorPaths($accountId, $filter->getAncestorIds(), $filter->getHasBlobId())
+                $this->collectAncestorPaths($this->accountId, $filter->getAncestorIds(), $filter->getHasBlobId())
             );
         }
         if (!is_null($filter->getParentIds())) {
             array_push(
                 $resultArray,
-                $this->collectParentPaths($accountId, $filter->getParentIds(), $filter->getHasBlobId())
+                $this->collectParentPaths($this->accountId, $filter->getParentIds(), $filter->getHasBlobId())
             );
         }
         if (
@@ -132,7 +159,7 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
             is_null($filter->getParentIds()) &&
             !is_null($filter->getHasBlobId())
         ) {
-            $tmpArray = $this->collectAncestorPaths($accountId, ["root"], $filter->getHasBlobId());
+            $tmpArray = $this->collectAncestorPaths($this->accountId, ["root"], $filter->getHasBlobId());
 
             // Include root in case of dir only
             if (!$filter->getHasBlobId()) {
@@ -150,16 +177,13 @@ class SquirrelMailStorageNodeDataAccess extends AbstractDataAccess
         return $resultArray;
     }
 
-    public function write()
-    {
-        // TODO: Implement me
-    }
-
     public function download($accountId, $name, $path, $accept)
     {
+        $this->init();
+
         // Inspiration was https://stackoverflow.com/a/32885706
         // Has more features like MIME type and ob_end_clean
-        $file = new \Squirrel\StorageNode($accountId, $path);
+        $file = new \Squirrel\StorageNode($this->accountId, $path);
         $mime_type = $accept;
         $size = $file->getSize();
 

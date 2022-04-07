@@ -1,0 +1,66 @@
+{
+	"@type" : "jsevent",
+	"alerts" : null,
+	"calendarId" : "sm_cal_stanimir_bozhilov_1998_gmail_com",
+	"created" : "2021-04-14T10:58:45Z",
+	"description" : "Some description (there's a newline after this, thus there should be more content) bla more content",
+	"descriptionContentType" : null,
+	"duration" : "P0DT10H0M",
+	"excluded" : null,
+	"freeBusyStatus" : null,
+	"id" : null,
+	"keywords" : null,
+	"links" : null,
+	"locale" : null,
+	"locations" : null,
+	"participantId" : null,
+	"participants" : null,
+	"priority" : "4",
+	"privacy" : null,
+	"prodId" : null,
+	"recurrenceOverrides" : null,
+	"recurrenceRule" : {
+		"@type" : "RecurrenceRule",
+		"byDay" : [
+			{
+			   "day" : "MO",
+			   "nthOfPeriod" : null
+			},
+			{
+			   "day" : "WE",
+			   "nthOfPeriod" : null
+			},
+			{
+			   "day" : "TH",
+			   "nthOfPeriod" : null
+			}
+		],
+		"byHour" : null,
+		"byMinute" : null,
+		"byMonth" : null,
+		"byMonthDay" : null,
+		"bySecond" : null,
+		"bySetPosition" : null,
+		"byWeekNo" : null,
+		"byYearDay" : null,
+		"count" : 3,
+		"firstDayOfWeek" : null,
+		"frequency" : "weekly",
+		"interval" : "2",
+		"rscale" : null,
+		"skip" : null,
+		"until" : null
+	},
+	"relatedTo" : null,
+	"replyTo" : null,
+	"sequence" : "1",
+	"showWithoutTime" : null,
+	"start" : "2021-04-14T05:00:00",
+	"status" : null,
+	"timeZone" : null,
+	"title" : "Recurring event test title",
+	"uid" : "sm_cal_evt_20210414T105845Z",
+	"updated" : "2021-04-14T10:59:32Z",
+	"useDefaultAlerts" : null,
+	"virtualLocations" : null
+}

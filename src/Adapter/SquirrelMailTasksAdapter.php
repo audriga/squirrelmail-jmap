@@ -1,10 +1,17 @@
 <?php
 
 use OpenXPort\Adapter\AbstractAdapter;
+use OpenXPort\Util\AdapterUtil;
 
 class SquirrelMailTasksAdapter extends AbstractAdapter {
 
     private $task;
+    private $logger;
+
+    public function __construct()
+    {
+        $this->logger = \OpenXPort\Util\Logger::getInstance();
+    }
 
     public function getTask() {
         return $this->task;
@@ -17,16 +24,35 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
     public function getDue() {
         $due = $this->task[0];
 
-        if (!isset($due) || is_null($due)) {
+        if (!isset($due) || is_null($due) || empty($due)) {
             return null;
         }
 
-        /**
-         * Append "T00:00:00", since the SQMail task only has date without time
-         * Date format shouldn't be changed, since it's the same
-         *
-        */
-        return $due . "T00:00:00";
+        // Usually the task due date from SQMail is formatted as "Y-m-d" (e.g. 2021-05-05)
+        $longYearFormat = "Y-m-d";
+
+        // Sometimes, however, it could also be formatted as "y-m-d" (e.g. 21-05-05), thus we need
+        // to take this format into consideration as well
+        $shortYearFormat = "y-m-d";
+
+        // Try to parse the SQMail task due date with the short year format first
+        $dueDate = DateTime::createFromFormat($shortYearFormat, $due);
+
+        // If the parsing was unsuccessful (i.e., createFromFormat above returns false),
+        // then try parsing with the long year format
+        if ($dueDate === false) {            
+            $dueDate = DateTime::createFromFormat($longYearFormat, $due);
+        }
+
+        // Create a JMAP due date, according to the format Y-m-d (e.g. 2021-05-05)
+        $jmapFormat = "Y-m-d";
+        $jmapDueDate = $dueDate->format($jmapFormat);
+        
+        // Since we don't receive a time component from SQMail's due date, we have to append 'T00:00:00'
+        // to the end of the JMAP due date, since the JMAP format contains a time component as well
+        $jmapDueDate .= 'T00:00:00';
+
+        return $jmapDueDate;
     }
 
     public function getTitle() {
@@ -36,7 +62,7 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
             return "";
         }
 
-        return $title;
+        return AdapterUtil::decodeHtml($title);
     }
 
     public function getDescription() {
@@ -46,7 +72,11 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
             return "";
         }
 
-        return $description;
+        $descriptionDec = AdapterUtil::decodeHtml($description);
+
+        $this->logger->debug("Decoded \"" . $description . "\" to \"" . $descriptionDec . "\"");
+
+        return $descriptionDec;
     }
 
 }

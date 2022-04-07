@@ -1,0 +1,1 @@
+a:3:{s:14:"enableReminder";i:1;s:12:"reminderTime";i:330;s:9:"attendees";a:2:{s:4:"51F1";a:2:{s:5:"email";s:22:"primaryemail@user1.com";s:6:"status";s:8:"Declined";}s:4:"8RIv";a:2:{s:5:"email";s:15:"user2@user2.com";s:6:"status";s:9:"Tentative";}}}

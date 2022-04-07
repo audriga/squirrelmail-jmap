@@ -3,14 +3,19 @@
 namespace OpenXPort\DataAccess;
 
 use OpenXPort\DataAccess\AbstractDataAccess;
+use OpenXPort\Util\AdapterUtil;
 
 class SquirrelMailTasksDataAccess extends AbstractDataAccess
 {
-    public function getAll($accountId = null)
+    protected function init()
     {
         // Import the SQMail code for working with tasks
         require_once(__DIR__ . '/../../../todo/functions.php');
+    }
 
+    public function getAll($accountId = null)
+    {
+        $this->init();
         $todos = '';
         todo_init($todos);
 
@@ -20,22 +25,34 @@ class SquirrelMailTasksDataAccess extends AbstractDataAccess
         $res = [];
 
         foreach ($todos as $t) {
-            // Transform individual todos from string to array ('\t' is the property divider in the string)
-            $t = explode("\t", $t);
-            array_push($res, $t);
+            if (isset($t) && !is_null($t) && !empty($t)) {
+                // Transform individual todos from string to array ('\t' is the property divider in the string)
+                $t = explode("\t", $t);
+                array_push($res, $t);
+            }
         }
 
         return $res;
     }
 
-    public function write()
+    public function get($ids, $accountId = null)
     {
-        // TODO: Implement me
+        throw new BadMethodCallException("Get via Task/get not implemented");
+    }
+
+    public function create($contactsToCreate, $accountId = null)
+    {
+        throw new BadMethodCallException("Create via Task/set not implemented");
+    }
+
+    public function destroy($ids, $accountId = null)
+    {
+        throw new BadMethodCallException("Destroy via Task/set not implemented");
     }
 
     // TODO support multiple filter conditions like in the standard
     public function query($accountId, $filter = null)
     {
-        // TODO: Implement me in case you want to be fancy
+        throw new BadMethodCallException("Query via Task/set not implemented");
     }
 }

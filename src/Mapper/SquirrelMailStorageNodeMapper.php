@@ -1,6 +1,6 @@
 <?php
 
-namespace Jmap\Mapper;
+namespace OpenXPort\Jmap\Mapper;
 
 use OpenXPort\Mapper\AbstractMapper;
 
@@ -18,7 +18,7 @@ class SquirrelMailStorageNodeMapper extends AbstractMapper
 
         foreach ($data as $node) {
             // No need for an adapter since SQFile is the adapter
-            $jmapFile = new \Jmap\Files\StorageNode($node->getId());
+            $jmapFile = new \OpenXPort\Jmap\Files\StorageNode($node->getId());
 
             $jmapFile->setBlobId($node->getBlobId());
             $jmapFile->setParentId($node->getParentId());

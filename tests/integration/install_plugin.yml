@@ -1,0 +1,52 @@
+# Install this plugin to the container
+# TODO symlink is not copied
+---
+- hosts: all
+  tasks:
+  # TODO This does not seem to handle dependencies of OpenXport well
+  - name: Make sure OpenXport is current
+    ansible.builtin.command: composer install --prefer-dist --no-dev
+    args:
+      chdir: ../../../jmap-openxport
+      creates: ../../../jmap-openxport/vendor/audriga
+    run_once: true
+  - name: Remove jmap-openxport folder
+    ansible.builtin.file:
+      path: ../../vendor/audriga
+      state: absent
+    run_once: true
+  - name: Mirror via composer
+    ansible.builtin.command: composer install --prefer-dist --no-dev
+    args:
+      chdir: ../../
+      creates: ../../vendor/audriga
+    run_once: true
+  - name: Create file share folder for admin
+    ansible.builtin.file:
+      path: "{{ container_dir }}/data/file_share/data/personal/{{ admin_user }}"
+      state: directory
+      mode: '0755'
+    delegate_to: 127.0.0.1
+    run_once: true
+  - name: Sync file share folder for admin_user
+    ansible.posix.synchronize:
+      src: "{{ playbook_dir }}/../resources/file_share/data/personal/david@neu.ro/"
+      dest: "{{ container_dir }}/data/file_share/data/personal/{{ admin_user }}"
+    run_once: true
+  - name: Create the JMAP plugin directory
+    ansible.builtin.file:
+      path: "{{ container_dir }}/plugins/jmap"
+      state: directory
+      mode: '0755'
+    delegate_to: 127.0.0.1
+    run_once: true
+  - name: Copy the whole plugin folder
+    ansible.posix.synchronize:
+      src: "{{ playbook_dir }}/../../"
+      dest: "{{ container_dir }}/plugins/jmap"
+    run_once: true
+  - name: Sync plugin config
+    ansible.posix.synchronize:
+      src: "{{ playbook_dir }}/../resources/plugin_config_local.php"
+      dest: "{{ container_dir }}/plugins/jmap/config/config.php"
+    run_once: true

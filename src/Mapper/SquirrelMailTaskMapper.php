@@ -1,22 +1,29 @@
 <?php
 
 use OpenXPort\Mapper\AbstractMapper;
-use Jmap\Task\Task;
+use OpenXPort\Jmap\Task\Task;
 
-class SquirrelMailTaskMapper extends AbstractMapper {
+class SquirrelMailTaskMapper extends AbstractMapper
+{
 
-    public function mapFromJmap($jmapData, $adapter) {
+    public function mapFromJmap($jmapData, $adapter)
+    {
         // TODO: Implement me
     }
 
-    public function mapToJmap($data, $adapter) {
+    public function mapToJmap($data, $adapter)
+    {
         $list = [];
-        
-        foreach ($data as $t) {
 
+        if (!isset($data) || is_null($data) || empty($data)) {
+            return $list;
+        }
+
+        foreach ($data as $t) {
             $adapter->setTask($t);
 
             $jt = new Task();
+            $jt->setType('jstask');
             $jt->setDue($adapter->getDue());
             $jt->setTitle($adapter->getTitle());
             $jt->setDescription($adapter->getDescription());
@@ -26,5 +33,4 @@ class SquirrelMailTaskMapper extends AbstractMapper {
 
         return $list;
     }
-
 }

@@ -11,9 +11,10 @@ The following data types are currently supported by the JMAP Plugin for Squirrel
 * Files over the upcoming JMAP for Files protocol
 
 ## Installation
-1. ☁ Clone this plugin into the `plugins` folder of your SquirrelMail: `git clone https://github.com/audriga/jmap-squirrelmail jmap` (Make sure the folder is named `jmap`)
-1. ✅ In the folder of the plugin, edit the config file `conf/config.php`
-1. 👩‍💻 Run `composer install --prefer-dist --no-dev`
+1. ☁ Clone this plugin into the `plugins` folder of your SquirrelMail: `git clone https://github.com/audriga/jmap-squirrelmail jmap` (Make sure the folder is named `jmap`). Then `cd jmap` and initialize its submodules via `git submodule update --init --recursive`.
+1. ✅ In the folder of the plugin, edit the config file `conf/config.php.sample` and store it under `conf/config.php`
+1. 💻 In the folder of the plugin, run `make zip` to create a ZIP archive under `build/`
+1. (optional) to include Graylog support, run `make zip_with_graylog` instead of `make zip`
 1. 🎉 Partytime! Help fix [some issues](https://github.com/audriga/jmap-squirrelmail/issues) and [send us some pull requests](https://github.com/audriga/jmap-squirrelmail/pulls) 👍
 
 ## Usage
@@ -21,13 +22,10 @@ Set up your favorite client to talk to SquirrelMail's JMAP API.
 
 ## Development
 ### Installation
-1. Leave out `--no-dev` and run `composer install --prefer-dist` instead
+1. Run `make update` instead of `make zip`
 
 ### Tests
-Run PHP CodeSniffer via
-```
-$ phpcs .
-```
+Run `make fulltest` to run linting and unit tests.
 
 For debugging purposes it makes sense to throw some cURL calls at the API. For example, this is how you tell the JMAP API to return all CalendarEvents:
 ```

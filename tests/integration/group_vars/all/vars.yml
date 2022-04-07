@@ -1,0 +1,8 @@
+# Defaults for all host
+---
+admin_user: wp13405851-test
+admin_pass: testuser1!
+normal_user: wp13405851-openxport
+normal_pass: bEAt96GW
+unavailable_user: idontexist
+unavailable_pass: idonthavepass

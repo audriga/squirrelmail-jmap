@@ -198,7 +198,16 @@ class StorageNode
             throw new \InvalidArgumentException('listDir() only accepts Directories. Input was: ' . $relativePath);
         }
 
-        $fullPaths = glob($fullPath . '*', GLOB_MARK);
+        // glob does not read hidden files automatically
+        // https://www.php.net/manual/en/function.glob.php#68869
+        $fullPaths = glob($fullPath . '{,.}*', GLOB_BRACE | GLOB_MARK);
+
+        // Remove linux-specific ./ and ../ directories
+        $fullPaths = array_diff($fullPaths, array($fullPath . '../', $fullPath . './'));
+
+        // NOTE: SQMail-specific
+        // Remove AJXP meta files
+        $fullPaths = array_diff($fullPaths, array($fullPath . '.ajxp_meta', $fullPath . '.ajxp_recycle_cache.ser'));
 
         $basePathLength = strlen(Config::$filesRoot . $this->accountId);
         $result = array();

@@ -1,0 +1,3 @@
+[squirrel_servers]
+container local_address=localhost:8087 container_dir=~/ops/containers/squirrelmail
+# TODO audriga_eu local_address=www.audriga.eu/test/squirrelmail container_dir=~/ops/containers/squirrelmail

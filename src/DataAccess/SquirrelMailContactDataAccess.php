@@ -3,10 +3,10 @@
 namespace OpenXPort\DataAccess;
 
 use OpenXPort\DataAccess\AbstractDataAccess;
+use OpenXPort\Util\AdapterUtil;
 
 class SquirrelMailContactDataAccess extends AbstractDataAccess
 {
-
     public function getAll($accountId = null)
     {
         // Import the SQMail code for addressbook functionality and get all addressbooks for the user, set in the
@@ -19,14 +19,24 @@ class SquirrelMailContactDataAccess extends AbstractDataAccess
         return $contacts;
     }
 
-    public function write()
+    public function get($ids, $accountId = null)
     {
-        // TODO: Implement me
+        throw new BadMethodCallException("Get via Contact/get not implemented");
+    }
+
+    public function create($contactsToCreate, $accountId = null)
+    {
+        throw new BadMethodCallException("Create via Contact/set not implemented");
+    }
+
+    public function destroy($ids, $accountId = null)
+    {
+        throw new BadMethodCallException("Destroy via Contact/set not implemented");
     }
 
     // TODO support multiple filter conditions like in the standard
     public function query($accountId, $filter = null)
     {
-        // TODO: Implement me in case you want to be fancy
+        throw new BadMethodCallException("Query via Contact/set not implemented");
     }
 }

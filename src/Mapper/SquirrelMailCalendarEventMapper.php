@@ -1,7 +1,10 @@
 <?php
 
+namespace OpenXPort\Mapper;
+
 use OpenXPort\Mapper\AbstractMapper;
-use Jmap\Calendar\CalendarEvent;
+use OpenXPort\Jmap\Calendar\CalendarEvent;
+use OpenXPort\Adapter\SquirrelMailCalendarEventMetaDataAdapter;
 
 class SquirrelMailCalendarEventMapper extends AbstractMapper {
 
@@ -11,8 +14,15 @@ class SquirrelMailCalendarEventMapper extends AbstractMapper {
 
     public function mapToJmap($data, $adapter) {
         $list = [];
+        
+        foreach ($data as $eventsWithMeta) {
 
-        foreach ($data as $e) {
+            // Since we can read calendar events together with meta data of theirs,
+            // we have arrays with 2 entries as entries of $data
+            // The first entry of each such array is the event itself, accessible  under the key 'event'.
+            // The second entry is the event meta data, accessible under the key 'eventMetaData'.
+            // Thus, here we first obtain each event via the key 'event'
+            $e = $eventsWithMeta['event'];
 
             /**
              * Swap newline characters in the DESCRIPTION prop for spaces, since newlines in this prop
@@ -23,7 +33,7 @@ class SquirrelMailCalendarEventMapper extends AbstractMapper {
             $e->description->rawValue = trim(preg_replace("/[\r\n]+/", " ", $e->description->rawValue));
             
             // Create an iCal object for each event and then feed this object into the adapter
-            $icalObj = new ZCiCal($e->getICal(true));
+            $icalObj = new \ZCiCal($e->getICal(true));
             
             $adapter->setICalEvent($icalObj->tree);
         
@@ -48,6 +58,34 @@ class SquirrelMailCalendarEventMapper extends AbstractMapper {
             $je->setPriority($adapter->getPriority());
             $je->setPrivacy($adapter->getClass());
             $je->setTimeZone($adapter->getTimeZone());
+            $je->setShowWithoutTime($adapter->getShowWithoutTime());
+
+            // Check if the function 'readEventMeta' is available and only then
+            // try to access an event's meta data (if we have any), containing reminders and attendees
+            // This function is usually only present in ProMail.
+            // Currently, it is present in SQMail only as a mock function, used for testing,
+            // which delivers mock meta data
+            if (function_exists('readEventMeta')
+                && isset($eventsWithMeta['eventMetaData'])
+                && !empty($eventsWithMeta['eventMetaData'])) {
+                // Obtain each event's meta data from the 2-entry array,
+                // as described at the beginning of this function
+                $eventMetaData = $eventsWithMeta['eventMetaData'];
+
+                // Create an adapter for the meta data which returns JMAP Alerts and JMAP Participants
+                // that can be set on $je. Feed the adapter with the meta data, read from ProMail
+                $metaDataAdapter = new SquirrelMailCalendarEventMetaDataAdapter();
+                $metaDataAdapter->setMetaData($eventMetaData);
+                
+                // Obtain the JMAP Alerts and Participants from the adapter
+                $jmapAlerts = $metaDataAdapter->getAlerts();
+                $jmapParticipants = $metaDataAdapter->getParticipants();
+
+                // Set $je's alerts and participants properties with the obtained
+                // JMAP Alerts and Participants from the adapter
+                $je->setAlerts($jmapAlerts);
+                $je->setParticipants($jmapParticipants);
+            }
 
             array_push($list, $je);
         }

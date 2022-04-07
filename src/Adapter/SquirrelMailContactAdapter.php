@@ -1,8 +1,9 @@
 <?php
 
 use OpenXPort\Adapter\AbstractAdapter;
-use Jmap\Contact\ContactInformation;
-use Jmap\Contact\Address;
+use OpenXPort\Util\AdapterUtil;
+use OpenXPort\Jmap\Contact\ContactInformation;
+use OpenXPort\Jmap\Contact\Address;
 
 class SquirrelMailContactAdapter extends AbstractAdapter {
     
@@ -20,41 +21,58 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
         $this->contact = $contact;
     }
 
+    public function getId() {
+        $nickname = $this->contact['nickname'];
+        if (is_null($nickname) || !isset($nickname) || empty($nickname)) {
+            throw new \InvalidArgumentException('Nickname should not be empty.');
+        }
+        return hash("sha256", $nickname);
+    }
+
+
     public function getPrefix() {
         $prefix = $this->contact['title'];
-        if (is_null($prefix)) {
+        if (is_null($prefix) || !isset($prefix) || empty($prefix)) {
             return null;
         }
-        return $prefix;
+        return AdapterUtil::decodeHtml($prefix);
     }
 
     public function getFirstName() {
         $firstName = $this->contact['firstname'];
-        if (is_null($firstName)) {
+        if (is_null($firstName) || !isset($firstName) || empty($firstName)) {
             return null;
         }
-        return $firstName;
+        return AdapterUtil::decodeHtml($firstName);
     }
 
     public function getLastName() {
         $lastName = $this->contact['lastname'];
-        if (is_null($lastName)) {
+        if (is_null($lastName) || !isset($lastName) || empty($lastName)) {
             return null;
         }
-        return $lastName;
+        return AdapterUtil::decodeHtml($lastName);
     }
 
     public function getNickname() {
         $nickname = $this->contact['nickname'];
-        if (is_null($nickname)) {
+        if (is_null($nickname) || !isset($nickname) || empty($nickname)) {
             return null;
         }
-        return $nickname;
+        return AdapterUtil::decodeHtml($nickname);
+    }
+
+    public function getDisplayname() {
+        $displayname = $this->contact['displayname'];
+        if (is_null($displayname) || !isset($displayname) || empty($displayname)) {
+            return null;
+        }   
+        return AdapterUtil::decodeHtml($displayname);
     }
 
     public function getBirthday() {
-        $birthday = $this->contact['birhday'];
-        if (is_null($birthday)) {
+        $birthday = $this->contact['birthday'];
+        if (is_null($birthday) || !isset($birthday) || empty($birthday)) {
             return null;
         }
         return $birthday;
@@ -62,7 +80,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
 
     public function getAnniversary() {
         $anniversary = $this->contact['anniversary'];
-        if (is_null($anniversary)) {
+        if (is_null($anniversary) || !isset($anniversary) || empty($anniversary)) {
             return null;
         }
         return $anniversary;
@@ -70,26 +88,26 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
 
     public function getCompany() {
         $company = $this->contact['company'];
-        if (is_null($company)) {
+        if (is_null($company) || !isset($company) || empty($company)) {
             return null;
         }
-        return $company;
+        return AdapterUtil::decodeHtml($company);
     }
 
     public function getDepartment() {
         $department = $this->contact['division'];
-        if (is_null($department)) {
+        if (is_null($department) || !isset($department) || empty($department)) {
             return null;
         }
-        return $department;
+        return AdapterUtil::decodeHtml($department);
     }
 
     public function getNotes() {
         $notes = $this->contact['label'];
-        if (is_null($notes)) {
+        if (is_null($notes) || !isset($notes) || empty($notes)) {
             return null;
         }
-        return $notes;
+        return AdapterUtil::decodeHtml($notes);
     }
 
     public function getEmails() {
@@ -98,7 +116,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
         $primaryEmail = $this->contact['email'];
         $secondaryEmail = $this->contact['secondaryemail'];
 
-        if (!is_null($primaryEmail)) {
+        if (!is_null($primaryEmail) && isset($primaryEmail) && !empty($primaryEmail)) {
             $jmapPrimaryEmail = new ContactInformation();
             $jmapPrimaryEmail->setType('personal');
             $jmapPrimaryEmail->setValue($primaryEmail);
@@ -108,7 +126,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapEmails, $jmapPrimaryEmail);
         }
 
-        if (!is_null($secondaryEmail)) {
+        if (!is_null($secondaryEmail) && isset($secondaryEmail) && !empty($secondaryEmail)) {
             $jmapSecondaryEmail = new ContactInformation();
             $jmapSecondaryEmail->setType('personal');
             $jmapSecondaryEmail->setValue($secondaryEmail);
@@ -116,6 +134,10 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             $jmapSecondaryEmail->setIsDefault(false);
 
             array_push($jmapEmails, $jmapSecondaryEmail);
+        }
+
+        if (count($jmapEmails) === 0) {
+            return null;
         }
 
         return $jmapEmails;
@@ -133,7 +155,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
         $workFax = $this->contact['workfax'];
         $homeFax = $this->contact['homefax'];
 
-        if (!is_null($workPhone)) {
+        if (!is_null($workPhone) && isset($workPhone) && !empty($workPhone)) {
             $jmapWorkPhone = new ContactInformation();
             $jmapWorkPhone->setType('work');
             $jmapWorkPhone->setValue($workPhone);
@@ -143,7 +165,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapWorkPhone);
         }
 
-        if (!is_null($workPhone2)) {
+        if (!is_null($workPhone2) && isset($workPhone2) && !empty($workPhone2)) {
             $jmapWorkPhone2 = new ContactInformation();
             $jmapWorkPhone2->setType('work');
             $jmapWorkPhone2->setValue($workPhone2);
@@ -153,7 +175,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapWorkPhone2);
         }
 
-        if (!is_null($homePhone)) {
+        if (!is_null($homePhone) && isset($homePhone) && !empty($homePhone)) {
             $jmapHomePhone = new ContactInformation();
             $jmapHomePhone->setType('home');
             $jmapHomePhone->setValue($homePhone);
@@ -163,7 +185,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapHomePhone);
         }
 
-        if (!is_null($homePhone2)) {
+        if (!is_null($homePhone2) && isset($homePhone2) && !empty($homePhone2)) {
             $jmapHomePhone2 = new ContactInformation();
             $jmapHomePhone2->setType('home');
             $jmapHomePhone2->setValue($homePhone2);
@@ -173,7 +195,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapHomePhone2);
         }
 
-        if (!is_null($mobilePhone)) {
+        if (!is_null($mobilePhone) && isset($mobilePhone) && !empty($mobilePhone)) {
             $jmapMobilePhone = new ContactInformation();
             $jmapMobilePhone->setType('mobile');
             $jmapMobilePhone->setValue($mobilePhone);
@@ -183,7 +205,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapMobilePhone);
         }
 
-        if (!is_null($mobilePhone2)) {
+        if (!is_null($mobilePhone2) && isset($mobilePhone2) && !empty($mobilePhone2)) {
             $jmapMobilePhone2 = new ContactInformation();
             $jmapMobilePhone2->setType('mobile');
             $jmapMobilePhone2->setValue($mobilePhone2);
@@ -193,7 +215,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapMobilePhone2);
         }
 
-        if (!is_null($workFax)) {
+        if (!is_null($workFax) && isset($workFax) && !empty($workFax)) {
             $jmapWorkFax = new ContactInformation();
             $jmapWorkFax->setType('fax');
             $jmapWorkFax->setValue($workFax);
@@ -203,7 +225,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapPhones, $jmapWorkFax);
         }
 
-        if (!is_null($homeFax)) {
+        if (!is_null($homeFax) && isset($homeFax) && !empty($homeFax)) {
             $jmapHomeFax = new ContactInformation();
             $jmapHomeFax->setType('fax');
             $jmapHomeFax->setValue($homeFax);
@@ -211,6 +233,10 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             $jmapHomeFax->setIsDefault(false);
 
             array_push($jmapPhones, $jmapHomeFax);
+        }
+
+        if (count($jmapPhones) === 0) {
+            return null;
         }
 
         return $jmapPhones;
@@ -223,7 +249,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
         $homeIm = $this->contact['homeim'];
         $website = $this->contact['website'];
 
-        if (!is_null($workIm)) {
+        if (!is_null($workIm) && isset($workIm) && !empty($workIm)) {
             $jmapWorkIm = new ContactInformation();
             $jmapWorkIm->setType('username');
             $jmapWorkIm->setValue($workIm);
@@ -233,7 +259,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapOnline, $jmapWorkIm);
         }
 
-        if (!is_null($homeIm)) {
+        if (!is_null($homeIm) && isset($homeIm) && !empty($homeIm)) {
             $jmapHomeIm = new ContactInformation();
             $jmapHomeIm->setType('username');
             $jmapHomeIm->setValue($homeIm);
@@ -243,7 +269,7 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapOnline, $jmapHomeIm);
         }
 
-        if (!is_null($website)) {
+        if (!is_null($website) && isset($website) && !empty($website)) {
             $jmapWebsite = new ContactInformation();
             $jmapWebsite->setType('uri');
             $jmapWebsite->setValue($website);
@@ -253,6 +279,10 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
             array_push($jmapOnline, $jmapWebsite);
         }
 
+        if (count($jmapOnline) === 0) {
+            return null;
+        }
+        
         return $jmapOnline;
     }
 
@@ -262,35 +292,63 @@ class SquirrelMailContactAdapter extends AbstractAdapter {
         $workAddress = $this->contact['workaddress'];
         $homeAddress = $this->contact['homeaddress'];
 
-        if (!is_null($workAddress)) {
+        if (!is_null($workAddress) && isset($workAddress) && !empty($workAddress)) {
             $jmapWorkAddress = new Address();
             $jmapWorkAddress->setType('work');
             $jmapWorkAddress->setLabel(null);
 
             // TODO: Find out how address data is structured and fill in the JMAP Address data accordingly (country, postcode, etc.)
             // Currently we put all the data into the 'street' property
-            $jmapWorkAddress->setStreet($workAddress);
+            $jmapWorkAddress->setStreet(AdapterUtil::decodeHtml($workAddress));
 
             $jmapWorkAddress->setIsDefault(false);
 
             array_push($jmapAddresses, $jmapWorkAddress);
         }
 
-        if (!is_null($homeAddress)) {
+        if (!is_null($homeAddress) && isset($homeAddress) && !empty($homeAddress)) {
             $jmapHomeAddress = new Address();
             $jmapHomeAddress->setType('home');
             $jmapHomeAddress->setLabel(null);
 
             // TODO: Find out how address data is structured and fill in the JMAP Address data accordingly (country, postcode, etc.)
             // Currently we put all the data into the 'street' property
-            $jmapHomeAddress->setStreet($homeAddress);
+            $jmapHomeAddress->setStreet(AdapterUtil::decodeHtml($homeAddress));
 
             $jmapHomeAddress->setIsDefault(false);
 
             array_push($jmapAddresses, $jmapHomeAddress);
         }
 
+        if (count($jmapAddresses) === 0) {
+            return null;
+        }
+
         return $jmapAddresses;
+    }
+
+    public function getGender() {
+        $gender = $this->contact['gender'];
+        if (is_null($gender) || !isset($gender) || empty($gender)) {
+            return null;
+        }
+        return $gender;
+    }
+
+    public function getRelatedTo() {
+        $jmapRelatedTo = [];
+
+        $spouse = $this->contact['spouse'];
+
+        if (isset($spouse) && !is_null($spouse) && !empty($spouse)) {
+            $jmapRelatedTo["$spouse"] = array("relation" => array("spouse" => true));
+        }
+
+        if (count($jmapRelatedTo) === 0) {
+            return null;
+        }
+
+        return $jmapRelatedTo;
     }
 
 }

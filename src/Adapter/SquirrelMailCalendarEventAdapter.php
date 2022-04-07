@@ -1,11 +1,14 @@
 <?php
 
+namespace OpenXPort\Adapter;
+
 require(__DIR__ . '/../icalendar/zapcallib.php');
 
 use OpenXPort\Adapter\AbstractAdapter;
+use OpenXPort\Util\AdapterUtil;
 
-use Jmap\Calendar\Location;
-use Jmap\Calendar\RecurrenceRule;
+use OpenXPort\Jmap\Calendar\Location;
+use OpenXPort\Jmap\Calendar\RecurrenceRule;
 
 require_once(__DIR__ . '/../Util/SquirrelMailCalendarEventAdapterUtil.php');
 
@@ -13,6 +16,12 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
 
     // This is an iCal event component (and not an entire iCal object)
     private $iCalEvent;
+    private $logger;
+
+    public function __construct()
+    {
+        $this->logger = \OpenXPort\Util\Logger::getInstance();
+    }
 
     public function getICalEvent() {
         return $this->iCalEvent;
@@ -35,7 +44,25 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     public function getDTStart() {
         $dtStart = $this->iCalEvent->data["DTSTART"];
 
+        $jmapStart = null;
         $date = \DateTime::createFromFormat("Ymd\THis\Z", $dtStart->getValues());
+
+        // If there's no 'Z' at the end of the date, try to parse the date without it
+        if ($date === false) {
+            $date = \DateTime::createFromFormat("Ymd\THis", $dtStart->getValues());
+        }
+
+        // If the date still can't be parsed, try parsing it without a time component
+        if ($date === false) {
+            $date = \DateTime::createFromFormat("Ymd", $dtStart->getValues());
+            $jmapStart = \date_format($date, "Y-m-d");
+
+            // Add default values for time in the 'start' JMAP property
+            $jmapStart .= "T00:00:00";
+
+            return $jmapStart;
+        }
+
         $jmapStart = date_format($date, "Y-m-d\TH:i:s");
         return $jmapStart;
     }
@@ -44,17 +71,29 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
         $dtStart = $this->iCalEvent->data["DTSTART"];
         $dtEnd = $this->iCalEvent->data["DTEND"];
 
-        $format = "Ymd\THis\Z";
+        $format = "Ymd\THis";
+        $formatWithZ = "Ymd\THis\Z";
 
-        $dateStart = \DateTime::createFromFormat($format, $dtStart->getValues());
-        $dateEnd = \DateTime::createFromFormat($format, $dtEnd->getValues());
+        $dateStart = \DateTime::createFromFormat($formatWithZ, $dtStart->getValues());
+        $dateEnd = \DateTime::createFromFormat($formatWithZ, $dtEnd->getValues());
+
+        // Analogically to getDTStart(), try different parsing strategy for dates, in case they didn't parse correctly at first
+        if ($dateStart === false || $dateEnd === false) {
+            $dateStart = \DateTime::createFromFormat($format, $dtStart->getValues());
+            $dateEnd = \DateTime::createFromFormat($format, $dtEnd->getValues());
+        }
+
+        if ($dateStart === false || $dateEnd === false) {
+            $dateStart = \DateTime::createFromFormat("Ymd", $dtStart->getValues());
+            $dateEnd = \DateTime::createFromFormat("Ymd", $dtEnd->getValues());
+        }
 
         $interval = $dateEnd->diff($dateStart);
         return $interval->format('P%aDT%hH%iM');
     }
 
     public function getSummary() {
-        return $this->iCalEvent->data["SUMMARY"]->getValues();
+        return AdapterUtil::decodeHtml($this->iCalEvent->data["SUMMARY"]->getValues());
     }
 
     public function getDescription() {
@@ -64,7 +103,7 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
             return NULL;
         }
 
-        return $description->getValues();
+        return AdapterUtil::decodeHtml($description->getValues());
     }
 
     public function getStatus() {
@@ -104,6 +143,10 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getProdId() {
+        if (is_null($this->iCalEvent->parentnode)) {
+            return null;
+        }
+
         $prodId = $this->iCalEvent->parentnode->data['PRODID'];
 
         if (is_null($prodId)) {
@@ -146,32 +189,58 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getSequence() {
-        $sequence = $this->iCalEvent->data['SEQUENCE'];
-
-        if (is_null($sequence)) {
+        if (!array_key_exists("SEQUENCE", $this->iCalEvent->data)) {
             return 0;
         }
 
-        return $sequence->getValues();
+        $sequence = $this->iCalEvent->data['SEQUENCE'];
+
+        // In case that the SEQUENCE we receive from iCalendar is unset, null or empty, just return 0 as a default value
+        if (!isset($sequence) || is_null($sequence) || empty($sequence)) {
+            $this->logger->warning(
+                "The value for the \"sequence\" property was unset, null or empty. Setting 0 as default value"
+            );
+            return 0;
+        }
+
+        // The JMAP "sequence" property needs to have an int value, that's why we call intval() on the iCalendar
+        // value of SEQUENCE. In case that intval() fails to convert $sequenceValue to an int, it returns 0,
+        // which is still ok for us, because it's an int and we can return it as a default value for "sequence".
+        return intval($sequence->getValues());
     }
 
     public function getLocation() {
+        if (!array_key_exists("LOCATION", $this->iCalEvent->data)) {
+            return null;
+        }
+
         $location = $this->iCalEvent->data['LOCATION'];
 
-        if (is_null($location)) {
-            return NULL;
+        if (!isset($location) || is_null($location) || empty($location)) {
+            return null;
+        }
+
+        $locationValues = explode(", ", $location->getValues());
+
+        if (!isset($locationValues) || is_null($locationValues) || empty($locationValues)) {
+            return null;
         }
 
         $jmapLocations = [];
 
-        $locationValues = explode(", ", $location->getValues());
-
         foreach ($locationValues as $lv) {
+            // If a given location value is unset, null or empty, skip it
+            if (!isset($lv) || is_null($lv) || empty($lv)) {
+                $this->logger->warning("Location name was unset, null or empty. Skipping this location entry.");
+                continue;
+            }
+
             $jmapLocation = new Location();
             $jmapLocation->setType("Location");
-            $jmapLocation->setName($lv);
-            
-            // Create an ID as a key in the array via base64 (it should just be some random string; I'm picking base64 as a random option)
+            $jmapLocation->setName(AdapterUtil::decodeHtml($lv));
+
+            // Create an ID as a key in the array via base64 (it should just be some random string;
+            // I'm picking base64 as a random option)
             $key = base64_encode($lv);
             $jmapLocations["$key"] = $jmapLocation;
         }
@@ -180,6 +249,10 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getCategories() {
+        if (!array_key_exists("CATEGORIES", $this->iCalEvent->data)) {
+            return null;
+        }
+
         $categories = $this->iCalEvent->data['CATEGORIES'];
 
         if (is_null($categories)) {
@@ -191,13 +264,17 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
         $categoryValues = explode(",", $categories->getValues());
 
         foreach ($categoryValues as $c) {
-            $jmapKeywords[$c] = true;
+            $jmapKeywords[AdapterUtil::decodeHtml($c)] = true;
         }
 
         return $jmapKeywords;
     }
 
     public function getRRule() {
+        if (!array_key_exists("RRULE", $this->iCalEvent->data)) {
+            return null;
+        }
+
         $rRule = $this->iCalEvent->data['RRULE'];
 
         if (is_null($rRule)) {
@@ -222,67 +299,67 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
 
             switch ($key) {
                 case 'FREQ':
-                    $jmapRecurrenceRule->setFrequency(SquirrelMailCalendarEventAdapterUtil::convertFromICalFreqToJmapFrequency($value));
+                    $jmapRecurrenceRule->setFrequency(\SquirrelMailCalendarEventAdapterUtil::convertFromICalFreqToJmapFrequency($value));
                     break;
                 
                 case 'INTERVAL':
-                    $jmapRecurrenceRule->setInterval(SquirrelMailCalendarEventAdapterUtil::convertFromICalIntervalToJmapInterval($value));
+                    $jmapRecurrenceRule->setInterval(\SquirrelMailCalendarEventAdapterUtil::convertFromICalIntervalToJmapInterval($value));
                     break;
 
                 case 'RSCALE':
-                    $jmapRecurrenceRule->setRscale(SquirrelMailCalendarEventAdapterUtil::convertFromICalRScaleToJmapRScale($value));
+                    $jmapRecurrenceRule->setRscale(\SquirrelMailCalendarEventAdapterUtil::convertFromICalRScaleToJmapRScale($value));
                     break;
                 
                 case 'SKIP':
-                    $jmapRecurrenceRule->setSkip(SquirrelMailCalendarEventAdapterUtil::convertFromICalSkipToJmapSkip($value));
+                    $jmapRecurrenceRule->setSkip(\SquirrelMailCalendarEventAdapterUtil::convertFromICalSkipToJmapSkip($value));
                     break;
 
                 case 'WKST':
-                    $jmapRecurrenceRule->setFirstDayOfWeek(SquirrelMailCalendarEventAdapterUtil::convertFromICalWKSTToJmapFirstDayOfWeek($value));
+                    $jmapRecurrenceRule->setFirstDayOfWeek(\SquirrelMailCalendarEventAdapterUtil::convertFromICalWKSTToJmapFirstDayOfWeek($value));
                     break;
                 
                 case 'BYDAY':
-                    $jmapRecurrenceRule->setByDay(SquirrelMailCalendarEventAdapterUtil::convertFromICalByDayToJmapByDay($value));
+                    $jmapRecurrenceRule->setByDay(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByDayToJmapByDay($value));
                     break;
 
                 case 'BYMONTHDAY':
-                    $jmapRecurrenceRule->setByMonthDay(SquirrelMailCalendarEventAdapterUtil::convertFromICalByMonthDayToJmapByMonthDay($value));
+                    $jmapRecurrenceRule->setByMonthDay(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByMonthDayToJmapByMonthDay($value));
                     break;
                 
                 case 'BYMONTH':
-                    $jmapRecurrenceRule->setByMonth(SquirrelMailCalendarEventAdapterUtil::convertFromICalByMonthToJmapByMonth($value));
+                    $jmapRecurrenceRule->setByMonth(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByMonthToJmapByMonth($value));
                     break;
 
                 case 'BYYEARDAY':
-                    $jmapRecurrenceRule->setByYearDay(SquirrelMailCalendarEventAdapterUtil::convertFromICalByYearDayToJmapByYearDay($value));
+                    $jmapRecurrenceRule->setByYearDay(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByYearDayToJmapByYearDay($value));
                     break;
                 
                 case 'BYWEEKNO':
-                    $jmapRecurrenceRule->setByWeekNo(SquirrelMailCalendarEventAdapterUtil::convertFromICalByWeekNoToJmapByWeekNo($value));
+                    $jmapRecurrenceRule->setByWeekNo(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByWeekNoToJmapByWeekNo($value));
                     break;
 
                 case 'BYHOUR':
-                    $jmapRecurrenceRule->setByHour(SquirrelMailCalendarEventAdapterUtil::convertFromICalByHourToJmapByHour($value));
+                    $jmapRecurrenceRule->setByHour(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByHourToJmapByHour($value));
                     break;
                 
                 case 'BYMINUTE':
-                    $jmapRecurrenceRule->setByMinute(SquirrelMailCalendarEventAdapterUtil::convertFromICalByMinuteToJmapByMinute($value));
+                    $jmapRecurrenceRule->setByMinute(\SquirrelMailCalendarEventAdapterUtil::convertFromICalByMinuteToJmapByMinute($value));
                     break;
 
                 case 'BYSECOND':
-                    $jmapRecurrenceRule->setBySecond(SquirrelMailCalendarEventAdapterUtil::convertFromICalBySecondToJmapBySecond($value));
+                    $jmapRecurrenceRule->setBySecond(\SquirrelMailCalendarEventAdapterUtil::convertFromICalBySecondToJmapBySecond($value));
                     break;
                 
                 case 'BYSETPOS':
-                    $jmapRecurrenceRule->setBySetPosition(SquirrelMailCalendarEventAdapterUtil::convertFromICalBySetPositionToJmapBySetPos($value));
+                    $jmapRecurrenceRule->setBySetPosition(\SquirrelMailCalendarEventAdapterUtil::convertFromICalBySetPositionToJmapBySetPos($value));
                     break;
 
                 case 'COUNT':
-                    $jmapRecurrenceRule->setCount(SquirrelMailCalendarEventAdapterUtil::convertFromICalCountToJmapCount($value));
+                    $jmapRecurrenceRule->setCount(\SquirrelMailCalendarEventAdapterUtil::convertFromICalCountToJmapCount($value));
                     break;
                 
                 case 'UNTIL':
-                    $jmapRecurrenceRule->setUntil(SquirrelMailCalendarEventAdapterUtil::convertFromICalUntilToJmapUntil($value));
+                    $jmapRecurrenceRule->setUntil(\SquirrelMailCalendarEventAdapterUtil::convertFromICalUntilToJmapUntil($value));
                     break;
 
                 default:
@@ -295,6 +372,10 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getExDate() {
+        if (!array_key_exists("EXDATE", $this->iCalEvent->data)) {
+            return null;
+        }
+
         $exDate = $this->iCalEvent->data['EXDATE'];
 
         if (is_null($exDate)) {
@@ -329,6 +410,10 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getClass() {
+        if (!array_key_exists("CLASS", $this->iCalEvent->data)) {
+            return null;
+        }
+
         $class = $this->iCalEvent->data['CLASS'];
 
         if (is_null($class)) {
@@ -351,7 +436,35 @@ class SquirrelMailCalendarEventAdapter extends AbstractAdapter {
     }
 
     public function getTimeZone() {
+        if (is_null($this->iCalEvent->parentnode)) {
+            return null;
+        }
+
         $timezoneComponent = $this->iCalEvent->parentNode->tree->child['VTIMEZONE'];
         return $timezoneComponent;
+    }
+
+    public function getShowWithoutTime()
+    {
+        $dtStart = $this->iCalEvent->data["DTSTART"];
+        $dtEnd = $this->iCalEvent->data["DTEND"];
+
+        // Full day format for dates, e.g. 20210615, where 'Y' is year (2021), 'm' month (06) and 'd' day (15)
+        // See https://www.php.net/manual/en/datetime.createfromformat.php
+        $fullDayDateFormat = "Ymd";
+
+        $dateStart = \DateTime::createFromFormat($fullDayDateFormat, $dtStart->getValues());
+        $dateEnd = \DateTime::createFromFormat($fullDayDateFormat, $dtEnd->getValues());
+
+        /**
+         * If createFromFormat() above does not return false (i.e. parses successfully) for the full day format for 'DTSTART' and 'DTEND',
+         * this means that both of these dates do not include time, i.e. are formatted without time.
+         * Based on this, we set the JMAP property 'showWithoutTime' to true to indicate a full day event.
+         */
+        if ($dateStart !== false && $dateEnd !== false) {
+            return true;
+        }
+
+        return false;
     }
 }

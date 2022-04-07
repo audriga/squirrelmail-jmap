@@ -1,6 +1,6 @@
 <?php
 
-use Jmap\Calendar\NDay;
+use OpenXPort\Jmap\Calendar\NDay;
 
 class SquirrelMailCalendarEventAdapterUtil {
     
@@ -151,7 +151,7 @@ class SquirrelMailCalendarEventAdapterUtil {
 
         foreach ($splitByDayArray as $bd) {
             // Parse the BYDAY string from iCal below
-        
+
             $byDayWeekDayString;
             $byDayWeekNumberString;
 
@@ -306,6 +306,38 @@ class SquirrelMailCalendarEventAdapterUtil {
         $jmapUntil = date_format($iCalUntilDate, "Y-m-d\TH:i:s");
 
         return $jmapUntil;
+    }
+
+    public static function convertFromSquirrelMailAttendeeStatusToJmapParticipationStatus($attendeeStatus)
+    {
+        if (is_null($attendeeStatus) || !isset($attendeeStatus) || empty($attendeeStatus)) {
+            return null;
+        }
+
+        switch ($attendeeStatus) {
+            case 'None':
+                return 'needs-action';
+                break;
+
+            case 'Accepted':
+                return 'accepted';
+                break;
+            
+            case 'Declined':
+                return 'declined';
+                break;
+
+            case 'Tentative':
+                return 'tentative';
+                break;
+            
+            // In the default case, we return the value 'needs-action', since this is what
+            // the default value is for JSCalenar (JMAP calendar events)
+            // see more: https://datatracker.ietf.org/doc/html/draft-ietf-calext-jscalendar-32#section-4.4.5 (see the part regarding "participationStatus")
+            default:
+                return 'needs-action';
+                break;
+        }
     }
 
 }

@@ -4,10 +4,44 @@ namespace Squirrel;
 
 class Config
 {
-    // Admin users for Webclient admin auth
-    // Users should exist on the webclient
-    // public static $adminUsers = ['yourchosenadminuser'];
+    // ********************** //
+    // SQMail-specific configuration
+    // ********************** //
+    // Admin users for Webclient admin auth. Users should exist on the webclient
+    public static $adminUsers = ['yourchosenadminuser'];
 
-    // AjaXplorer file root
-    // public static $filesRoot = '/path/to/files/tests/resources/file_share/data/personal/';
+    // AjaXplorer file root (absolute path)
+    public static $filesRoot = '/path/to/files/tests/resources/file_share/data/personal/';
+
+    // ********************** //
+    /// Logging configuration
+    // ********************** //
+    // Logging will be chosen automatically depending on what PSR-3 logger is included.
+    // Only a single logger will be used. However, you can force disallow certain loggers manually.
+
+    // Allow FileLogger (also as fallback in case no other is working)
+    public static $allowFileLog = false;
+
+    // Allow Graylog logger (in case included)
+    public static $allowGraylog = false;
+
+    // PSR 3 log level to use
+    public static $logLevel = \Psr\Log\LogLevel::WARNING;
+
+    /// File-logger configuration
+    // Path to log file
+    public static $logPath = __DIR__ . '/../log.log';
+
+    /// Graylog configuration
+    // Graylog endpoint to use
+    public static $graylogEndpoint = '';
+
+    // Graylog Port to use
+    public static $graylogPort = 12202;
+
+    // Allow self-signed certs
+    public static $graylogAllowSelfSigned = false;
+
+    // Use TLS
+    public static $graylogUseTls = true;
 }
