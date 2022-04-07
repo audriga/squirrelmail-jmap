@@ -1,7 +1,6 @@
 {
     "name": "audriga/jmap-squirrelmail",
     "description": "JMAP support for SquirrelMail",
-    "version": "1.2.1",
     "type": "project",
     "license": "Apache-2.0",
     "authors": [
@@ -13,13 +12,6 @@
             "name": "Joris Baum",
             "email": "joris@audriga.com"
         }
-    ],
-    "repositories": [
-        {
-            "type": "artifact",
-            "url": "/tmp/openxport_archives/"
-        }
-
     ],
     "require": {
         "php": ">=5.6.0",
