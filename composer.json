@@ -25,7 +25,6 @@
         "classmap": ["src/", "config/"]
     },
     "archive": {
-        "name": "jmap-squirrelmail",
         "exclude": ["/tests", "/build", "/README.md"]
     }
 }

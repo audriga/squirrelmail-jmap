@@ -11,10 +11,9 @@ The following data types are currently supported by the JMAP Plugin for Squirrel
 * Files over the upcoming JMAP for Files protocol
 
 ## Installation
-1. ☁ Clone this plugin into the `plugins` folder of your SquirrelMail: `git clone https://github.com/audriga/jmap-squirrelmail jmap` (Make sure the folder is named `jmap`). Then `cd jmap` and initialize its submodules via `git submodule update --init --recursive`.
+1. ☁ Clone this plugin into the `plugins` folder of your SquirrelMail: `git clone https://github.com/audriga/jmap-squirrelmail jmap` (Make sure the folder is named `jmap`). Then `cd jmap`.
 1. ✅ In the folder of the plugin, edit the config file `conf/config.php.sample` and store it under `conf/config.php`
-1. 💻 In the folder of the plugin, run `make zip` to create a ZIP archive under `build/`
-1. (optional) to include Graylog support, run `make zip_with_graylog` instead of `make zip`
+1. Run `make` to initialize the project for the default PHP version (8.1). Use other build targets (e.g. `make php56_mode` or `make php70_mode`) instead, in case you are using a different version.
 1. 🎉 Partytime! Help fix [some issues](https://github.com/audriga/jmap-squirrelmail/issues) and [send us some pull requests](https://github.com/audriga/jmap-squirrelmail/pulls) 👍
 
 ## Usage
@@ -22,7 +21,7 @@ Set up your favorite client to talk to SquirrelMail's JMAP API.
 
 ## Development
 ### Installation
-1. Run `make update` instead of `make zip`
+1. Run `make update` after `make`
 
 ### Tests
 Run `make fulltest` to run linting and unit tests.
