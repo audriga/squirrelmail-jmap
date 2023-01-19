@@ -44,6 +44,12 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
             $dueDate = DateTime::createFromFormat($longYearFormat, $due);
         }
 
+        // If the second parsing attempt failed as well, log and return null
+        if ($dueDate === false) {
+            $this->logger->error("There was an issue with parsing the due date from SQMail");
+            return null;
+        }
+
         // Create a JMAP due date, according to the format Y-m-d (e.g. 2021-05-05)
         $jmapFormat = "Y-m-d";
         $jmapDueDate = $dueDate->format($jmapFormat);
