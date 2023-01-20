@@ -1,3 +1,4 @@
 22-01-12	Test1	This is my first note...<br><br>Checking break lines
 22-01-15	Second test	Checking characters<br><br>(&#65377;&#65381;&#65381;&#65377;)<br><br>бс, _*; ьк
 22-01-20	Third test ( &#728;&#9661;&#728;)&#12387;&#9832;	Invitation to a tea party...<br><br>It looks like a cup of tea...
+asdasdas	Broken due date test	This should produce an error log
