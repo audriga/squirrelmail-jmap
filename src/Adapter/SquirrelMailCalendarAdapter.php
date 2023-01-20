@@ -48,7 +48,7 @@ class SquirrelMailCalendarAdapter extends AbstractAdapter {
             $calendarWriteableUserRights->setMayAddItems(true);
             $calendarWriteableUserRights->setMayUpdateAll(true);
             $calendarWriteableUserRights->setMayRemoveAll(true);
-            $calendarReadableUserRights->setMayReadItems(true);
+            $calendarWriteableUserRights->setMayReadItems(true);
 
             if (is_array($calendarWriteableUsers)) {
                 foreach ($calendarWriteableUsers as $calendarWriteableUser) {

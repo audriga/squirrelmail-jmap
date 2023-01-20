@@ -78,7 +78,7 @@ $accessors = array(
     "Identities" => null,
     "Filters" => null,
     "StorageNodes" => new \OpenXPort\DataAccess\SquirrelMailStorageNodeDataAccess(),
-    "Calendars" => new \OpenXPort\DataAccess\SquirrelMailCalendarDataAccess()
+    "Calendars" => new \OpenXPort\DataAccess\SquirrelMailCalendarDataAccess(),
     "ContactGroups" => new \OpenXPort\DataAccess\SquirrelMailContactGroupDataAccess()
 );
 
@@ -94,7 +94,7 @@ $adapters = array(
     "Identities" => null,
     "Filters" => null,
     "StorageNodes" => null,
-    "Calendars" => new SquirrelMailCalendarAdapter()
+    "Calendars" => new SquirrelMailCalendarAdapter(),
     "ContactGroups" => new \OpenXPort\Adapter\SquirrelMailContactGroupAdapter()
 );
 
@@ -110,7 +110,7 @@ $mappers = array(
     "Identities" => null,
     "Filters" => null,
     "StorageNodes" => new \OpenXPort\Jmap\Mapper\SquirrelMailStorageNodeMapper(),
-    "Calendars" => new SquirrelMailCalendarMapper()
+    "Calendars" => new SquirrelMailCalendarMapper(),
     "ContactGroups" => new \OpenXPort\Mapper\SquirrelMailContactGroupMapper()
 );
 
