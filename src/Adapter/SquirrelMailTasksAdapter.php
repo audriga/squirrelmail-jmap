@@ -46,7 +46,7 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
 
         // If the second parsing attempt failed as well, log and return null
         if ($dueDate === false) {
-            $this->logger->error("There was an issue with parsing the due date from SQMail");
+            $this->logger->error("Unable to parse due date: " . print_r($due));
             return null;
         }
 
