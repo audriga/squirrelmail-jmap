@@ -8,10 +8,10 @@ class Config
     // SQMail-specific configuration
     // ********************** //
     // Admin users for Webclient admin auth. Users should exist on the webclient
-    public static $adminUsers = ['wp13405851-openxport'];
+    public static $adminUsers = ['wp13405851-test'];
 
     // AjaXplorer file root (absolute path)
-    public static $filesRoot = '/is/htdocs/wp13405851_CFPRFU5T2C/www/www.audriga.eu/hp/test/squirrelmail/data/file_share/data/personal/';
+    public static $filesRoot = '../../data/file_share/data/personal/';
 
     // ********************** //
     /// Logging configuration
