@@ -47,7 +47,7 @@ class SquirrelMailTasksAdapter extends AbstractAdapter {
         // If the second parsing attempt failed as well, log and return null
         if ($dueDate === false) {
             $this->logger->error("Unable to parse due date: " . print_r($due, true));
-            return null;
+            throw new \InvalidArgumentException("Unable to parse due date: " . print_r($due, true));
         }
 
         // Create a JMAP due date, according to the format Y-m-d (e.g. 2021-05-05)
