@@ -2,7 +2,7 @@
     "name": "audriga/jmap-squirrelmail",
     "description": "JMAP support for SquirrelMail",
     "type": "project",
-    "license": "Apache-2.0",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Stanimir Bozhilov",
