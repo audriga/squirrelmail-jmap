@@ -1,4 +1,6 @@
 # SquirrelMail JMAP
+⚠️  This version is still in its early stages. This API exposes user data. It is not recommended to expose this API to untrusted networks for now. Please consider contacting us before using this in production.
+
 The JMAP Plugin for SquirrelMail provides [JMAP](https://jmap.io/) support for SquirrelMail-based systems by exposing a RESTful API Endpoint which speaks the JMAP Protocol.
 
 Please note that this version is still in its early stages.
