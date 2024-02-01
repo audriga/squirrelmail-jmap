@@ -1,5 +1,5 @@
 {
-    "name": "audriga/jmap-squirrelmail",
+    "name": "audriga/squirrelmail-jmap",
     "description": "JMAP support for SquirrelMail",
     "type": "project",
     "license": "GPL-2.0-or-later",
